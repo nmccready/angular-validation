@@ -163,8 +163,6 @@
     return {
       restrict: 'A',
       require: 'ngModel',
-      validFunc: validFunc,
-      invalidFunc: invalidFunc,
       link: function(scope, element, attrs, ctrl) {
         /**
          * watch
