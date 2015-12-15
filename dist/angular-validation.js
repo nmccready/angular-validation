@@ -382,6 +382,7 @@
         messageElem.css('display', '');
       } else {
         messageElem.css('display', 'none');
+        messageElem.html('');
       }
 
       ctrl.$setValidity(ctrl.$name, true);
@@ -511,6 +512,8 @@
     return {
       restrict: 'A',
       require: 'ngModel',
+      validFunc: validFunc,
+      invalidFunc: invalidFunc,
       link: function(scope, element, attrs, ctrl) {
         /**
          * watch
