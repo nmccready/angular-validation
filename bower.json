@@ -24,6 +24,9 @@
     "tests"
   ],
   "dependencies": {
+    "angular": "1.X"
+  },
+  "devDependencies": {
     "bootstrap": "3.X",
     "ui-bootstrap": "0.X",
     "ui-select": "angular-ui-select#~0.13.2",
