@@ -95,7 +95,7 @@
     };
 
     /**
-     * Get the valid method     
+     * Get the valid method
      * @returns {*}
      */
     this.getValidMethod = function() {
@@ -577,6 +577,7 @@
             ctrl.$render();
             if (attrs.messageId) angular.element(document.querySelector('#' + attrs.messageId)).html('');
             else element.next().html('');
+            if ($validationProvider.validCallback) $validationProvider.validCallback(element);
           });
         });
 
