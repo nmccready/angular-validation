@@ -7,8 +7,8 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'test/lib/angular.1.3.18.js',
-      'test/lib/angular-mocks.1.3.18.js',
+      'node_modules/angular/angular.js',
+      'node_modules/angular-mocks/angular-mocks.js',
       'dist/angular-validation.js',
       'dist/angular-validation-rule.js',
       'test/unit/*.js'

@@ -55,9 +55,10 @@ describe('provider', function() {
       });
 
     $timeout.flush();
+    $rootScope.$apply();
     expect(submitSpy).toHaveBeenCalled();
-    expect(successSpy).toHaveBeenCalled();
     expect(errorSpy).not.toHaveBeenCalled();
+    expect(successSpy).toHaveBeenCalled();
   }));
 
   it('set value to 1234567', inject(function() {

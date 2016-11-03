@@ -1,7 +1,44 @@
 (function() {
-  angular.module('validation', ['validation.provider', 'validation.directive']);
-  angular.module('validation.provider', []);
-  angular.module('validation.directive', ['validation.provider']);
+  angular.module('validation', ['validation.utils', 'validation.provider', 'validation.directive']);
+  angular.module('validation.directive', ['validation.utils', 'validation.provider', ]);
+  angular.module('validation.provider', ['validation.utils']);
+  angular.module('validation.utils', []);
+}).call(this);
+
+(function() {
+  angular
+    .module('validation.utils')
+    .service('validationPromiseUtils', ['$q', function($q) {
+
+      function isPromise(arg) {
+        return arg.constructor === Object && typeof arg.then === 'function';
+      }
+
+      function doPromise(arg, promiseFunc) {
+        var d = $q.defer();
+        d[promiseFunc](arg);
+        return d.promise;
+      }
+
+      function resolve(arg) {
+        return doPromise(arg, 'resolve');
+      }
+
+      function reject(arg) {
+        return doPromise(arg, 'reject');
+      }
+
+      function toPromise(arg) {
+        return $q.when(arg);
+      }
+
+      return {
+        resolve: resolve,
+        reject: reject,
+        toPromise: toPromise,
+        isPromise: isPromise
+      };
+    }]);
 }).call(this);
 
 (function() {
@@ -180,23 +217,29 @@
     this.validate = function(form) {
       var deferred = $q.defer();
       var idx = 0;
+      var promises = [];
 
       if (form === undefined) {
         console.error('This is not a regular Form name scope');
         deferred.reject('This is not a regular Form name scope');
         return deferred.promise;
       }
-
+      console.log($scope['ng-valid-submits']);
+      // all the below broadcasts are a bad idea as there is no way to tell they are finished by the time the form
+      // is checked for validity below
       if (form.validationId) { // single
-        $scope.$broadcast(form.$name + 'submit-' + form.validationId, idx++);
+        promises.push($scope['ng-valid-submits'][form.$name + 'submit-' + form.validationId](idx++));
+        // $scope.$broadcast(form.$name + 'submit-' + form.validationId, idx++);
       } else if (form.constructor === Array) { // multiple
         for (var k in form) {
-          $scope.$broadcast(form[k].$name + 'submit-' + form[k].validationId, idx++);
+          promises.push($scope['ng-valid-submits'][form[k].$name + 'submit-' + form[k].validationId](idx++));
+          // $scope.$broadcast(form[k].$name + 'submit-' + form[k].validationId, idx++);
         }
       } else {
         for (var i in form) { // whole scope
           if (i[0] !== '$' && form[i].hasOwnProperty('$dirty')) {
-            $scope.$broadcast(i + 'submit-' + form[i].validationId, idx++);
+            promises.push($scope['ng-valid-submits'][i + 'submit-' + form[i].validationId](idx++));
+            // $scope.$broadcast(i + 'submit-' + form[i].validationId, idx++);
           }
         }
       }
@@ -215,7 +258,10 @@
         return deferred.promise;
       };
 
-      $timeout(function() {
+      // this $timeout is a serious hack, all the above validation broadcasts are not checked to be finished
+      // they all should be wrapped up into a single promise and then proceed to checkValid
+      // or lastly give the option to accept the form as is without race conditioning the form
+      $q.all(promises).then(function() {
         if (_this.checkValid(form)) {
           deferred.resolve('success');
         } else {
@@ -357,6 +403,8 @@
     var $q = $injector.get('$q');
     var $timeout = $injector.get('$timeout');
     var $parse = $injector.get('$parse');
+    var $rootScope = $injector.get('$rootScope');
+    var promiseUtils = $injector.get('validationPromiseUtils');
 
     /**
      * Do this function if validation valid
@@ -513,6 +561,15 @@
       restrict: 'A',
       require: 'ngModel',
       link: function(scope, element, attrs, ctrl) {
+
+        if (!$rootScope['ng-valid-submits'])
+          $rootScope['ng-valid-submits'] = {};
+
+        scope.$on('$destroy', function() {
+          if (!$rootScope['ng-valid-submits'])
+            return;
+          delete $rootScope['ng-valid-submits'][ctrl.$name + 'submit-' + uid];
+        });
         /**
          * watch
          * @type {watch}
@@ -591,8 +648,11 @@
 
         /**
          * Click submit form, check the validity when submit
+         *
+         * TODO: Refactor to hash object to call individual functions this way we can get access to the promises
          */
-        scope.$on(ctrl.$name + 'submit-' + uid, function(event, index) {
+        $rootScope['ng-valid-submits'][ctrl.$name + 'submit-' + uid] = function(index) {
+          $rootScope.$broadcast(ctrl.$name + 'submit-' + uid, index); // broadcast for easy testing
           var value = ctrl.$viewValue;
           var isValid = false;
 
@@ -632,9 +692,14 @@
             }
           };
 
-          if (isValid.constructor === Object) isValid.then(setFocus);
-          else setFocus(isValid);
-        });
+          promiseUtils.toPromise(isValid)
+            .then(function(result) {
+              setFocus(result);
+              return result;
+            });
+
+          return isValid;
+        };
 
         /**
          * Validate blur method

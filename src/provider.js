@@ -181,21 +181,21 @@
         deferred.reject('This is not a regular Form name scope');
         return deferred.promise;
       }
-
+      console.log($scope['ng-valid-submits']);
       // all the below broadcasts are a bad idea as there is no way to tell they are finished by the time the form
       // is checked for validity below
       if (form.validationId) { // single
-        promises.push($scope["ng-valid-submits"][form.$name + 'submit-' + form.validationId](idx++));
+        promises.push($scope['ng-valid-submits'][form.$name + 'submit-' + form.validationId](idx++));
         // $scope.$broadcast(form.$name + 'submit-' + form.validationId, idx++);
       } else if (form.constructor === Array) { // multiple
         for (var k in form) {
-          promises.push($scope["ng-valid-submits"][form[k].$name + 'submit-' + form[k].validationId](idx++));
+          promises.push($scope['ng-valid-submits'][form[k].$name + 'submit-' + form[k].validationId](idx++));
           // $scope.$broadcast(form[k].$name + 'submit-' + form[k].validationId, idx++);
         }
       } else {
         for (var i in form) { // whole scope
           if (i[0] !== '$' && form[i].hasOwnProperty('$dirty')) {
-            promises.push($scope["ng-valid-submits"][i + 'submit-' + form[i].validationId](idx++));
+            promises.push($scope['ng-valid-submits'][i + 'submit-' + form[i].validationId](idx++));
             // $scope.$broadcast(i + 'submit-' + form[i].validationId, idx++);
           }
         }
@@ -218,7 +218,7 @@
       // this $timeout is a serious hack, all the above validation broadcasts are not checked to be finished
       // they all should be wrapped up into a single promise and then proceed to checkValid
       // or lastly give the option to accept the form as is without race conditioning the form
-      $q.all(promises, function() {
+      $q.all(promises).then(function() {
         if (_this.checkValid(form)) {
           deferred.resolve('success');
         } else {
