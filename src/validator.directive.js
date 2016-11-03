@@ -164,6 +164,12 @@
       restrict: 'A',
       require: 'ngModel',
       link: function(scope, element, attrs, ctrl) {
+
+        scope["ng-valid-submits"] = {}
+
+        $scope.$on('$destroy', function(){
+          scope["ng-valid-submits"] = {};
+        });
         /**
          * watch
          * @type {watch}
@@ -242,8 +248,10 @@
 
         /**
          * Click submit form, check the validity when submit
+         *
+         * TODO: Refactor to hash object to call individual functions this way we can get access to the promises
          */
-        scope.$on(ctrl.$name + 'submit-' + uid, function(event, index) {
+        scope["ng-valid-submits"][ctrl.$name + 'submit-' + uid] = function(index) {
           var value = ctrl.$viewValue;
           var isValid = false;
 
@@ -283,9 +291,22 @@
             }
           };
 
-          if (isValid.constructor === Object) isValid.then(setFocus);
-          else setFocus(isValid);
-        });
+          //should return a promise here always!
+          var retPromise;
+
+          if (isValid.constructor === Object && typeof isValid.then === 'function')
+            retPromise = isValid
+          else {
+            var d = $q.defer();
+            d.resolve(isValid)
+            retPromise =  d.promise;
+          }
+
+          return retPromise.then(function(result){
+            setFocus(result);
+            return result;
+          });
+        };
 
         /**
          * Validate blur method
