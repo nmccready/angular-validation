@@ -25,7 +25,7 @@ module.exports = function(grunt) {
     concat: {
       basic_and_extras: {
         files: {
-          'dist/angular-validation.js': ['src/module.js', 'src/provider.js', 'src/*.directive.js'],
+          'dist/angular-validation.js': ['src/module.js', 'src/utils.js', 'src/provider.js', 'src/*.directive.js'],
           'dist/angular-validation-rule.js': ['src/rule.js']
         }
       }
@@ -79,12 +79,8 @@ module.exports = function(grunt) {
       }
     },
     karma: {
-      // angular 1.2.x support to version angular-validation 1.2.x
-      // angular1_2: {
-      //     configFile: 'config/karma.conf.angular.1.2.js'
-      // }
-      angular1_3: {
-        configFile: 'config/karma.conf.angular.1.3.js'
+      angular: {
+        configFile: 'config/karma.conf.angular.js'
       }
     }
   });

@@ -8,6 +8,8 @@
     var $q = $injector.get('$q');
     var $timeout = $injector.get('$timeout');
     var $parse = $injector.get('$parse');
+    var $rootScope = $injector.get('$rootScope');
+    var promiseUtils = $injector.get('validationPromiseUtils');
 
     /**
      * Do this function if validation valid
@@ -165,10 +167,13 @@
       require: 'ngModel',
       link: function(scope, element, attrs, ctrl) {
 
-        scope["ng-valid-submits"] = {}
+        if (!$rootScope['ng-valid-submits'])
+          $rootScope['ng-valid-submits'] = {};
 
-        $scope.$on('$destroy', function(){
-          scope["ng-valid-submits"] = {};
+        scope.$on('$destroy', function() {
+          if (!$rootScope['ng-valid-submits'])
+            return;
+          delete $rootScope['ng-valid-submits'][ctrl.$name + 'submit-' + uid];
         });
         /**
          * watch
@@ -251,7 +256,8 @@
          *
          * TODO: Refactor to hash object to call individual functions this way we can get access to the promises
          */
-        scope["ng-valid-submits"][ctrl.$name + 'submit-' + uid] = function(index) {
+        $rootScope['ng-valid-submits'][ctrl.$name + 'submit-' + uid] = function(index) {
+          $rootScope.$broadcast(ctrl.$name + 'submit-' + uid, index); // broadcast for easy testing
           var value = ctrl.$viewValue;
           var isValid = false;
 
@@ -291,21 +297,13 @@
             }
           };
 
-          //should return a promise here always!
-          var retPromise;
+          promiseUtils.toPromise(isValid)
+            .then(function(result) {
+              setFocus(result);
+              return result;
+            });
 
-          if (isValid.constructor === Object && typeof isValid.then === 'function')
-            retPromise = isValid
-          else {
-            var d = $q.defer();
-            d.resolve(isValid)
-            retPromise =  d.promise;
-          }
-
-          return retPromise.then(function(result){
-            setFocus(result);
-            return result;
-          });
+          return isValid;
         };
 
         /**
