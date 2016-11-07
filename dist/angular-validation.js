@@ -219,27 +219,30 @@
       var idx = 0;
       var promises = [];
 
+      function execValidation(fName) {
+        var maybeValidFunc = $scope['ng-valid-submits'][fName];
+        //old $scope.$broadcast(fName, idx++);
+        if (maybeValidFunc)
+          promises.push(maybeValidFunc(idx++));
+      }
+
       if (form === undefined) {
         console.error('This is not a regular Form name scope');
         deferred.reject('This is not a regular Form name scope');
         return deferred.promise;
       }
-      console.log($scope['ng-valid-submits']);
       // all the below broadcasts are a bad idea as there is no way to tell they are finished by the time the form
       // is checked for validity below
       if (form.validationId) { // single
-        promises.push($scope['ng-valid-submits'][form.$name + 'submit-' + form.validationId](idx++));
-        // $scope.$broadcast(form.$name + 'submit-' + form.validationId, idx++);
+        execValidation(form.$name + 'submit-' + form.validationId);
       } else if (form.constructor === Array) { // multiple
         for (var k in form) {
-          promises.push($scope['ng-valid-submits'][form[k].$name + 'submit-' + form[k].validationId](idx++));
-          // $scope.$broadcast(form[k].$name + 'submit-' + form[k].validationId, idx++);
+          execValidation(form[k].$name + 'submit-' + form[k].validationId);
         }
       } else {
         for (var i in form) { // whole scope
           if (i[0] !== '$' && form[i].hasOwnProperty('$dirty')) {
-            promises.push($scope['ng-valid-submits'][i + 'submit-' + form[i].validationId](idx++));
-            // $scope.$broadcast(i + 'submit-' + form[i].validationId, idx++);
+            execValidation(i + 'submit-' + form[i].validationId);
           }
         }
       }
