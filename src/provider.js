@@ -188,7 +188,7 @@
         deferred.reject('This is not a regular Form name scope');
         return deferred.promise;
       }
-      // all the below broadcasts are a bad idea as there is no way to tell they are finished by the time the form
+      // Big divergence from main fork as we use execValidation with out broadcasts to protect the timing
       // is checked for validity below
       if (form.validationId) { // single
         execValidation(form.$name + 'submit-' + form.validationId);
@@ -218,9 +218,7 @@
         return deferred.promise;
       };
 
-      // this $timeout is a serious hack, all the above validation broadcasts are not checked to be finished
-      // they all should be wrapped up into a single promise and then proceed to checkValid
-      // or lastly give the option to accept the form as is without race conditioning the form
+      // Divergence from main fork where $timeout was removed infavor of promises to have valid timing
       $q.all(promises).then(function() {
         if (_this.checkValid(form)) {
           deferred.resolve('success');
