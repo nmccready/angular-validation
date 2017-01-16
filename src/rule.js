@@ -10,9 +10,13 @@
         email: /^([\w-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([\w-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/,
         number: /^\d+$/,
         minlength: function(value, scope, element, attrs, param) {
+          if (!value)
+            return false;
           return value.length >= param;
         },
         maxlength: function(value, scope, element, attrs, param) {
+          if (!value)
+            return false;
           return value.length <= param;
         }
       };
