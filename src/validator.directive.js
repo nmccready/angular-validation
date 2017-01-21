@@ -103,7 +103,7 @@
      * @param value
      * @returns {}
      */
-    var checkValidation = function(scope, element, attrs, ctrl, validation, value) {
+    var checkValidation = function(scope, element, attrs, ctrl, validation, value, override) {
       var validators = validation.slice(0);
       var validatorExpr = validators[0].trim();
       var paramIndex = validatorExpr.indexOf('=');
@@ -113,10 +113,11 @@
       var successMessage = validator + 'SuccessMessage';
       var errorMessage = validator + 'ErrorMessage';
       var expression = $validationProvider.getExpression(validator);
+      var overideDefined = override !== undefined && override !== null;
       var valid = {
         success: function() {
           validFunc(element, attrs[successMessage], validator, scope, ctrl, attrs);
-          if (leftValidation.length) {
+          if (leftValidation.length && !overideDefined) {
             return checkValidation(scope, element, attrs, ctrl, leftValidation, value);
           } else {
             return true;
@@ -126,6 +127,9 @@
           return invalidFunc(element, attrs[errorMessage], validator, scope, ctrl, attrs);
         }
       };
+
+      if (overideDefined)
+        return override ? valid.success() : valid.error();
 
       if (expression === undefined) {
         $log.error('You are using undefined validator "%s"', validator);
@@ -262,10 +266,7 @@
           var value = ctrl.$viewValue;
           var isValid = false;
 
-          if (override !== undefined && override !== null)
-            isValid = override;
-          else
-            isValid = checkValidation(scope, element, attrs, ctrl, validation, value);
+          isValid = checkValidation(scope, element, attrs, ctrl, validation, value, override);
 
           if (validMethod === 'submit') {
             // clear previous scope.$watch
