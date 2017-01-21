@@ -659,12 +659,15 @@
          *
          * TODO: Refactor to hash object to call individual functions this way we can get access to the promises
          */
-        ctrl.$angularValidators[ctrl.$name + '-' + uid] = function(index) {
+        ctrl.$angularValidators[ctrl.$name + '-' + uid] = function(index, override) {
           $rootScope.$broadcast(ctrl.$name + '-' + uid, index); // broadcast for easy testing
           var value = ctrl.$viewValue;
           var isValid = false;
 
-          isValid = checkValidation(scope, element, attrs, ctrl, validation, value);
+          if (override !== undefined && override !== null)
+            isValid = override;
+          else
+            isValid = checkValidation(scope, element, attrs, ctrl, validation, value);
 
           if (validMethod === 'submit') {
             // clear previous scope.$watch
