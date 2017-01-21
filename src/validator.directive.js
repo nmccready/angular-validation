@@ -9,6 +9,7 @@
     var $timeout = $injector.get('$timeout');
     var $parse = $injector.get('$parse');
     var $rootScope = $injector.get('$rootScope');
+    var $log = $injector.get('$log');
     var promiseUtils = $injector.get('validationPromiseUtils');
 
     /**
@@ -127,7 +128,7 @@
       };
 
       if (expression === undefined) {
-        console.error('You are using undefined validator "%s"', validator);
+        $log.error('You are using undefined validator "%s"', validator);
         if (leftValidation.length) return checkValidation(scope, element, attrs, ctrl, leftValidation, value);
         else return;
       }
@@ -167,13 +168,13 @@
       require: 'ngModel',
       link: function(scope, element, attrs, ctrl) {
 
-        if (!$rootScope['ng-valid-submits'])
-          $rootScope['ng-valid-submits'] = {};
+        if (!ctrl.$angularValidators)
+          ctrl.$angularValidators = {};
 
         scope.$on('$destroy', function() {
-          if (!$rootScope['ng-valid-submits'])
+          if (!ctrl.$angularValidators)
             return;
-          delete $rootScope['ng-valid-submits'][ctrl.$name + 'submit-' + uid];
+          delete ctrl.$angularValidators[ctrl.$name + 'submit-' + uid];
         });
         /**
          * watch
@@ -256,8 +257,8 @@
          *
          * TODO: Refactor to hash object to call individual functions this way we can get access to the promises
          */
-        $rootScope['ng-valid-submits'][ctrl.$name + 'submit-' + uid] = function(index) {
-          $rootScope.$broadcast(ctrl.$name + 'submit-' + uid, index); // broadcast for easy testing
+        ctrl.$angularValidators[ctrl.$name + '-' + uid] = function(index) {
+          $rootScope.$broadcast(ctrl.$name + '-' + uid, index); // broadcast for easy testing
           var value = ctrl.$viewValue;
           var isValid = false;
 

@@ -119,7 +119,7 @@ describe('provider', function() {
     var errorSpy2 = jasmine.createSpy('errorSpy2');
 
     // test .success()
-    $scope.$on('requiredsubmit-' + $scope.Form.required.validationId, function() {
+    $scope.$on('required-' + $scope.Form.required.validationId, function() {
       submitSpy();
     });
     $scope.$apply(function() {
@@ -143,7 +143,7 @@ describe('provider', function() {
       $scope.required = '';
     });
 
-    $scope.$on('requiredsubmit-' + $scope.Form.required.validationId, function() {
+    $scope.$on('required-' + $scope.Form.required.validationId, function() {
       submitSpy2();
     });
 

@@ -52,6 +52,7 @@
     var $http;
     var $q;
     var $timeout;
+    var $log;
     var _this = this;
 
     /**
@@ -64,6 +65,7 @@
       $http = $injector.get('$http');
       $q = $injector.get('$q');
       $timeout = $injector.get('$timeout');
+      $log = $injector.get('$log');
     };
 
     /**
@@ -219,30 +221,30 @@
       var idx = 0;
       var promises = [];
 
-      function execValidation(fName) {
-        var maybeValidFunc = $scope['ng-valid-submits'][fName];
-        //old $scope.$broadcast(fName, idx++);
-        if (maybeValidFunc)
-          promises.push(maybeValidFunc(idx++));
+      function execValidation(func) {
+        if (func)
+          promises.push(func(idx++));
       }
 
       if (form === undefined) {
-        console.error('This is not a regular Form name scope');
+        $log.error('This is not a regular Form name scope');
         deferred.reject('This is not a regular Form name scope');
         return deferred.promise;
       }
+
       // Big divergence from main fork as we use execValidation with out broadcasts to protect the timing
       // is checked for validity below
       if (form.validationId) { // single
-        execValidation(form.$name + 'submit-' + form.validationId);
+        execValidation(form.$angularValidators[form.$name + '-' + form.validationId]);
+
       } else if (form.constructor === Array) { // multiple
         for (var k in form) {
-          execValidation(form[k].$name + 'submit-' + form[k].validationId);
+          execValidation(form[k].$angularValidators[form[k].$name + '-' + form[k].validationId]);
         }
       } else {
         for (var i in form) { // whole scope
           if (i[0] !== '$' && form[i].hasOwnProperty('$dirty')) {
-            execValidation(i + 'submit-' + form[i].validationId);
+            execValidation(form[i].$angularValidators[i + '-' + form[i].validationId]);
           }
         }
       }
@@ -291,7 +293,7 @@
      */
     this.reset = function(form) {
       if (form === undefined) {
-        console.error('This is not a regular Form name scope');
+        $log.error('This is not a regular Form name scope');
         return;
       }
 
@@ -405,6 +407,7 @@
     var $timeout = $injector.get('$timeout');
     var $parse = $injector.get('$parse');
     var $rootScope = $injector.get('$rootScope');
+    var $log = $injector.get('$log');
     var promiseUtils = $injector.get('validationPromiseUtils');
 
     /**
@@ -523,7 +526,7 @@
       };
 
       if (expression === undefined) {
-        console.error('You are using undefined validator "%s"', validator);
+        $log.error('You are using undefined validator "%s"', validator);
         if (leftValidation.length) return checkValidation(scope, element, attrs, ctrl, leftValidation, value);
         else return;
       }
@@ -563,13 +566,13 @@
       require: 'ngModel',
       link: function(scope, element, attrs, ctrl) {
 
-        if (!$rootScope['ng-valid-submits'])
-          $rootScope['ng-valid-submits'] = {};
+        if (!ctrl.$angularValidators)
+          ctrl.$angularValidators = {};
 
         scope.$on('$destroy', function() {
-          if (!$rootScope['ng-valid-submits'])
+          if (!ctrl.$angularValidators)
             return;
-          delete $rootScope['ng-valid-submits'][ctrl.$name + 'submit-' + uid];
+          delete ctrl.$angularValidators[ctrl.$name + 'submit-' + uid];
         });
         /**
          * watch
@@ -652,8 +655,8 @@
          *
          * TODO: Refactor to hash object to call individual functions this way we can get access to the promises
          */
-        $rootScope['ng-valid-submits'][ctrl.$name + 'submit-' + uid] = function(index) {
-          $rootScope.$broadcast(ctrl.$name + 'submit-' + uid, index); // broadcast for easy testing
+        ctrl.$angularValidators[ctrl.$name + '-' + uid] = function(index) {
+          $rootScope.$broadcast(ctrl.$name + '-' + uid, index); // broadcast for easy testing
           var value = ctrl.$viewValue;
           var isValid = false;
 

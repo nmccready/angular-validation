@@ -42,7 +42,7 @@ describe('provider', function() {
       $scope.number = 123;
     });
 
-    $scope.$on('numberWatchsubmit-' + $scope.Form.numberWatch.validationId, function() {
+    $scope.$on('numberWatch-' + $scope.Form.numberWatch.validationId, function() {
       submitSpy();
     });
 
@@ -70,7 +70,7 @@ describe('provider', function() {
       $scope.number = 1234567;
     });
 
-    $scope.$on('numberWatchsubmit-' + $scope.Form.numberWatch.validationId, function() {
+    $scope.$on('numberWatch-' + $scope.Form.numberWatch.validationId, function() {
       submitSpy();
     });
 
@@ -102,7 +102,7 @@ describe('provider', function() {
       errorSpy();
     }
 
-    $scope.$on('numberWatchsubmit-' + $scope.Form.numberWatch.validationId, function() {
+    $scope.$on('numberWatch-' + $scope.Form.numberWatch.validationId, function() {
       submitSpy();
     });
 
