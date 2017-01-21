@@ -192,15 +192,19 @@
       // Big divergence from main fork as we use execValidation with out broadcasts to protect the timing
       // is checked for validity below
       if (form.validationId) { // single
-        execValidation(form.$angularValidators[form.$name + '-' + form.validationId]);
-
+        if (form.$angularValidators)
+          execValidation(form.$angularValidators[form.$name + '-' + form.validationId]);
       } else if (form.constructor === Array) { // multiple
         for (var k in form) {
+          if (!form[k].$angularValidators)
+            continue;
           execValidation(form[k].$angularValidators[form[k].$name + '-' + form[k].validationId]);
         }
       } else {
         for (var i in form) { // whole scope
           if (i[0] !== '$' && form[i].hasOwnProperty('$dirty')) {
+            if (!form[i].$angularValidators)
+              continue;
             execValidation(form[i].$angularValidators[i + '-' + form[i].validationId]);
           }
         }
